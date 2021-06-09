@@ -1013,10 +1013,10 @@ class Parser : public ParserState {
 
   uint64_t advanced_features_;
 
+  std::string file_being_parsed_;
+
  private:
   const char *source_;
-
-  std::string file_being_parsed_;
 
   std::vector<std::pair<Value, FieldDef *>> field_stack_;
 

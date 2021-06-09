@@ -84,6 +84,8 @@ class DartGenerator : public BaseGenerator {
               "' as " + ImportAliasName(kv2->first) + ";\n";
         }
       }
+      GenIncludeDependencies(&code, kv->first);
+
       code += "\n";
       code += kv->second;
 
@@ -134,8 +136,33 @@ class DartGenerator : public BaseGenerator {
     return ret;
   }
 
+  // TODO this only works with included files that have the same namespace(s).
+  //      To fix this for the general use case, we would need a list of
+  //      namespaces of the included files.
   void GenIncludeDependencies(std::string *code,
-                              const std::string &the_namespace) {
+                              const std::string &the_namespace) const {
+    // We need to read actual .fbs files to see what namespaces they use.
+    //    const std::set<std::string> &included_files =
+    //        parser_.files_included_per_file_.at(parser_.file_being_parsed_);
+    //    for (const std::string &included_file : included_files) {
+    //      std::string contents;
+    //      if (!LoadFile(included_file.c_str(), false, &contents)) {
+    //        // throw?
+    //        continue;
+    //      }
+    //
+    //      // TODO fails to include - needs the original "include_paths" arg
+    //      Parser innerParser;
+    //      if (!innerParser.Parse(contents.c_str())) {
+    //        // throw innerParser.error_?
+    //        continue;
+    //      }
+    //      for (const auto *ns : innerParser.namespaces_) {
+    //        ns = nullptr;
+    //        printf("%s", contents.c_str());
+    //      }
+    //    }
+
     for (auto it = parser_.included_files_.begin();
          it != parser_.included_files_.end(); ++it) {
       if (it->second.empty()) continue;
