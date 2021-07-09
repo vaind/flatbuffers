@@ -144,7 +144,8 @@ class Builder {
     this.initialSize: 1024,
     bool internStrings = false,
     Allocator allocator = const DefaultAllocator(),
-  })  : _allocator = allocator,
+  })
+      : _allocator = allocator,
         _buf = allocator.allocate(initialSize) {
     if (internStrings) {
       _strings = new Map<String, int>();
@@ -364,11 +365,9 @@ class Builder {
       }
     }
 
-    // zero out the added padding
-    for (var i = sizeBeforePadding + 1;
-        i <= finishedSize - requiredBytes;
-        i++) {
-      _setUint8AtTail(_buf, i, 0);
+    final padding = finishedSize - requiredBytes - sizeBeforePadding;
+    if (padding != 0) {
+      _zeroOut(_buf.lengthInBytes - finishedSize + requiredBytes, padding);
     }
 
     return _buf.buffer
@@ -712,7 +711,48 @@ class Builder {
 
   /// Zero-pads the buffer, which may be required for some struct layouts.
   void pad(int howManyBytes) {
-    for (int i = 0; i < howManyBytes; i++) putUint8(0);
+    for (int i = 0; i < howManyBytes; i++)
+      putUint8(0);
+  }
+
+  void _zeroOut(int offset, int bytes) {
+    assert(bytes >= 0);
+    switch (bytes) {
+      case 0:
+        break;
+      case 1:
+        _buf.setUint8(offset, 0);
+        break;
+      case 2:
+        _buf.setUint16(offset, 0);
+        break;
+      case 3:
+        _buf.setUint8(offset, 0);
+        _buf.setUint16(offset + 1, 0);
+        break;
+      case 4:
+        _buf.setUint32(offset, 0);
+        break;
+      case 5:
+        _buf.setUint8(offset, 0);
+        _buf.setUint32(offset + 1, 0);
+        break;
+      case 6:
+        _buf.setUint16(offset, 0);
+        _buf.setUint32(offset + 2, 0);
+        break;
+      case 7:
+        _buf.setUint8(offset, 0);
+        _buf.setUint16(offset + 1, 0);
+        _buf.setUint32(offset + 3, 0);
+        break;
+      case 8:
+        _buf.setUint64(offset, 0);
+        break;
+      default:
+        _buf.setUint64(offset, 0);
+        _zeroOut(offset + 8, bytes - 8);
+    }
   }
 
   /// Prepare for writing the given `count` of scalars of the given `size`.
@@ -740,8 +780,8 @@ class Builder {
     }
 
     // zero out the added padding
-    for (var i = _tail + 1; i <= _tail + alignDelta; i++) {
-      _setUint8AtTail(_buf, i, 0);
+    if (alignDelta != 0) {
+      _zeroOut(_buf.lengthInBytes - _tail - alignDelta, alignDelta);
     }
 
     // Update the tail pointer.
@@ -1279,8 +1319,8 @@ abstract class Allocator {
   /// grows downwards, and is intended specifically for use with [Builder].
   /// Params [inUseBack] and [inUseFront] indicate how much of [oldData] is
   /// actually in use at each end, and needs to be copied.
-  ByteData resize(
-      ByteData oldData, int newSize, int inUseBack, int inUseFront) {
+  ByteData resize(ByteData oldData, int newSize, int inUseBack,
+      int inUseFront) {
     final newData = allocate(newSize);
     _copyDownward(oldData, newData, inUseBack, inUseFront);
     deallocate(oldData);
@@ -1290,8 +1330,8 @@ abstract class Allocator {
   /// Called by [resize] to copy memory from [oldData] to [newData]. Only
   /// memory of size [inUseFront] and [inUseBack] will be copied from the front
   /// and back of the old memory allocation.
-  void _copyDownward(
-      ByteData oldData, ByteData newData, int inUseBack, int inUseFront) {
+  void _copyDownward(ByteData oldData, ByteData newData, int inUseBack,
+      int inUseFront) {
     if (inUseBack != 0) {
       newData.buffer.asUint8List().setAll(
           newData.lengthInBytes - inUseBack,
