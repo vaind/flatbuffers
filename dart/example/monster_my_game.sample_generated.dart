@@ -219,7 +219,7 @@ class MonsterBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable();
+    fbBuilder.startTable(10);
   }
 
   int addPos(int offset) {
@@ -317,7 +317,7 @@ class MonsterObjectBuilder extends fb.ObjectBuilder {
     final int? pathOffset = _path?.isNotEmpty == true
         ? fbBuilder.writeListOfStructs(_path!)
         : null;
-    fbBuilder.startTable();
+    fbBuilder.startTable(10);
     if (_pos != null) {
       fbBuilder.addStruct(0, _pos!.finish(fbBuilder));
     }
@@ -376,7 +376,7 @@ class WeaponBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable();
+    fbBuilder.startTable(2);
   }
 
   int addNameOffset(int? offset) {
@@ -408,7 +408,7 @@ class WeaponObjectBuilder extends fb.ObjectBuilder {
   @override
   int finish(fb.Builder fbBuilder) {
     final int? nameOffset = fbBuilder.writeString(_name);
-    fbBuilder.startTable();
+    fbBuilder.startTable(2);
     fbBuilder.addOffset(0, nameOffset);
     fbBuilder.addInt16(1, _damage);
     return fbBuilder.endTable();
