@@ -387,9 +387,9 @@ class TestSimpleTableWithEnumT {
       this.color = Color.Green});
 
   int pack(fb.Builder fbBuilder) {
-    fbBuilder.startTable(1);
-    fbBuilder.addUint8(0, color.value);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(1)
+      ..addUint8(0, color.value)
+    ).finish();
   }
 
   @override
@@ -436,9 +436,9 @@ class TestSimpleTableWithEnumObjectBuilder extends fb.ObjectBuilder {
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
-    fbBuilder.startTable(1);
-    fbBuilder.addUint8(0, _color?.value);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(1)
+      ..addUint8(0, _color?.value)
+    ).finish();
   }
 
   /// Convenience method to serialize to byte list.
@@ -848,11 +848,11 @@ class StatT {
   int pack(fb.Builder fbBuilder) {
     final int? idOffset = id == null ? null
         : fbBuilder.writeString(id!);
-    fbBuilder.startTable(3);
-    fbBuilder.addOffset(0, idOffset);
-    fbBuilder.addInt64(1, val);
-    fbBuilder.addUint16(2, count);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(3)
+      ..addOffset(0, idOffset)
+      ..addInt64(1, val)
+      ..addUint16(2, count)
+    ).finish();
   }
 
   @override
@@ -915,11 +915,11 @@ class StatObjectBuilder extends fb.ObjectBuilder {
   int finish(fb.Builder fbBuilder) {
     final int? idOffset = _id == null ? null
         : fbBuilder.writeString(_id!);
-    fbBuilder.startTable(3);
-    fbBuilder.addOffset(0, idOffset);
-    fbBuilder.addInt64(1, _val);
-    fbBuilder.addUint16(2, _count);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(3)
+      ..addOffset(0, idOffset)
+      ..addInt64(1, _val)
+      ..addUint16(2, _count)
+    ).finish();
   }
 
   /// Convenience method to serialize to byte list.
@@ -966,9 +966,9 @@ class ReferrableT {
       this.id = 0});
 
   int pack(fb.Builder fbBuilder) {
-    fbBuilder.startTable(1);
-    fbBuilder.addUint64(0, id);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(1)
+      ..addUint64(0, id)
+    ).finish();
   }
 
   @override
@@ -1015,9 +1015,9 @@ class ReferrableObjectBuilder extends fb.ObjectBuilder {
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
-    fbBuilder.startTable(1);
-    fbBuilder.addUint64(0, _id);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(1)
+      ..addUint64(0, _id)
+    ).finish();
   }
 
   /// Convenience method to serialize to byte list.
@@ -1344,60 +1344,60 @@ class MonsterT {
         : fbBuilder.writeListUint8(testrequirednestedflatbuffer!);
     final int? scalarKeySortedTablesOffset = scalarKeySortedTables == null ? null
         : fbBuilder.writeList(scalarKeySortedTables!.map((b) => b.pack(fbBuilder)).toList());
-    fbBuilder.startTable(50);
+    return (fbBuilder.startTable(50)
     if (pos != null) {
-      fbBuilder.addStruct(0, pos!.pack(fbBuilder));
+        ..addStruct(0, pos!.pack(fbBuilder))
     }
-    fbBuilder.addInt16(1, mana);
-    fbBuilder.addInt16(2, hp);
-    fbBuilder.addOffset(3, nameOffset);
-    fbBuilder.addOffset(5, inventoryOffset);
-    fbBuilder.addUint8(6, color.value);
-    fbBuilder.addUint8(7, testType?.value);
-    fbBuilder.addOffset(8, testOffset);
-    fbBuilder.addOffset(9, test4Offset);
-    fbBuilder.addOffset(10, testarrayofstringOffset);
-    fbBuilder.addOffset(11, testarrayoftablesOffset);
-    fbBuilder.addOffset(12, enemyOffset);
-    fbBuilder.addOffset(13, testnestedflatbufferOffset);
-    fbBuilder.addOffset(14, testemptyOffset);
-    fbBuilder.addBool(15, testbool);
-    fbBuilder.addInt32(16, testhashs32Fnv1);
-    fbBuilder.addUint32(17, testhashu32Fnv1);
-    fbBuilder.addInt64(18, testhashs64Fnv1);
-    fbBuilder.addUint64(19, testhashu64Fnv1);
-    fbBuilder.addInt32(20, testhashs32Fnv1a);
-    fbBuilder.addUint32(21, testhashu32Fnv1a);
-    fbBuilder.addInt64(22, testhashs64Fnv1a);
-    fbBuilder.addUint64(23, testhashu64Fnv1a);
-    fbBuilder.addOffset(24, testarrayofboolsOffset);
-    fbBuilder.addFloat32(25, testf);
-    fbBuilder.addFloat32(26, testf2);
-    fbBuilder.addFloat32(27, testf3);
-    fbBuilder.addOffset(28, testarrayofstring2Offset);
-    fbBuilder.addOffset(29, testarrayofsortedstructOffset);
-    fbBuilder.addOffset(30, flexOffset);
-    fbBuilder.addOffset(31, test5Offset);
-    fbBuilder.addOffset(32, vectorOfLongsOffset);
-    fbBuilder.addOffset(33, vectorOfDoublesOffset);
-    fbBuilder.addOffset(34, parentNamespaceTestOffset);
-    fbBuilder.addOffset(35, vectorOfReferrablesOffset);
-    fbBuilder.addUint64(36, singleWeakReference);
-    fbBuilder.addOffset(37, vectorOfWeakReferencesOffset);
-    fbBuilder.addOffset(38, vectorOfStrongReferrablesOffset);
-    fbBuilder.addUint64(39, coOwningReference);
-    fbBuilder.addOffset(40, vectorOfCoOwningReferencesOffset);
-    fbBuilder.addUint64(41, nonOwningReference);
-    fbBuilder.addOffset(42, vectorOfNonOwningReferencesOffset);
-    fbBuilder.addUint8(43, anyUniqueType?.value);
-    fbBuilder.addOffset(44, anyUniqueOffset);
-    fbBuilder.addUint8(45, anyAmbiguousType?.value);
-    fbBuilder.addOffset(46, anyAmbiguousOffset);
-    fbBuilder.addOffset(47, vectorOfEnumsOffset);
-    fbBuilder.addInt8(48, signedEnum.value);
-    fbBuilder.addOffset(49, testrequirednestedflatbufferOffset);
-    fbBuilder.addOffset(50, scalarKeySortedTablesOffset);
-    return fbBuilder.endTable();
+      ..addInt16(1, mana)
+      ..addInt16(2, hp)
+      ..addOffset(3, nameOffset)
+      ..addOffset(5, inventoryOffset)
+      ..addUint8(6, color.value)
+      ..addUint8(7, testType?.value)
+      ..addOffset(8, testOffset)
+      ..addOffset(9, test4Offset)
+      ..addOffset(10, testarrayofstringOffset)
+      ..addOffset(11, testarrayoftablesOffset)
+      ..addOffset(12, enemyOffset)
+      ..addOffset(13, testnestedflatbufferOffset)
+      ..addOffset(14, testemptyOffset)
+      ..addBool(15, testbool)
+      ..addInt32(16, testhashs32Fnv1)
+      ..addUint32(17, testhashu32Fnv1)
+      ..addInt64(18, testhashs64Fnv1)
+      ..addUint64(19, testhashu64Fnv1)
+      ..addInt32(20, testhashs32Fnv1a)
+      ..addUint32(21, testhashu32Fnv1a)
+      ..addInt64(22, testhashs64Fnv1a)
+      ..addUint64(23, testhashu64Fnv1a)
+      ..addOffset(24, testarrayofboolsOffset)
+      ..addFloat32(25, testf)
+      ..addFloat32(26, testf2)
+      ..addFloat32(27, testf3)
+      ..addOffset(28, testarrayofstring2Offset)
+      ..addOffset(29, testarrayofsortedstructOffset)
+      ..addOffset(30, flexOffset)
+      ..addOffset(31, test5Offset)
+      ..addOffset(32, vectorOfLongsOffset)
+      ..addOffset(33, vectorOfDoublesOffset)
+      ..addOffset(34, parentNamespaceTestOffset)
+      ..addOffset(35, vectorOfReferrablesOffset)
+      ..addUint64(36, singleWeakReference)
+      ..addOffset(37, vectorOfWeakReferencesOffset)
+      ..addOffset(38, vectorOfStrongReferrablesOffset)
+      ..addUint64(39, coOwningReference)
+      ..addOffset(40, vectorOfCoOwningReferencesOffset)
+      ..addUint64(41, nonOwningReference)
+      ..addOffset(42, vectorOfNonOwningReferencesOffset)
+      ..addUint8(43, anyUniqueType?.value)
+      ..addOffset(44, anyUniqueOffset)
+      ..addUint8(45, anyAmbiguousType?.value)
+      ..addOffset(46, anyAmbiguousOffset)
+      ..addOffset(47, vectorOfEnumsOffset)
+      ..addInt8(48, signedEnum.value)
+      ..addOffset(49, testrequirednestedflatbufferOffset)
+      ..addOffset(50, scalarKeySortedTablesOffset)
+    ).finish();
   }
 
   @override
@@ -1835,60 +1835,60 @@ class MonsterObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeListUint8(_testrequirednestedflatbuffer!);
     final int? scalarKeySortedTablesOffset = _scalarKeySortedTables == null ? null
         : fbBuilder.writeList(_scalarKeySortedTables!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(50);
+    return (fbBuilder.startTable(50)
     if (_pos != null) {
-      fbBuilder.addStruct(0, _pos!.finish(fbBuilder));
+        ..addStruct(0, _pos!.finish(fbBuilder))
     }
-    fbBuilder.addInt16(1, _mana);
-    fbBuilder.addInt16(2, _hp);
-    fbBuilder.addOffset(3, nameOffset);
-    fbBuilder.addOffset(5, inventoryOffset);
-    fbBuilder.addUint8(6, _color?.value);
-    fbBuilder.addUint8(7, _testType?.value);
-    fbBuilder.addOffset(8, testOffset);
-    fbBuilder.addOffset(9, test4Offset);
-    fbBuilder.addOffset(10, testarrayofstringOffset);
-    fbBuilder.addOffset(11, testarrayoftablesOffset);
-    fbBuilder.addOffset(12, enemyOffset);
-    fbBuilder.addOffset(13, testnestedflatbufferOffset);
-    fbBuilder.addOffset(14, testemptyOffset);
-    fbBuilder.addBool(15, _testbool);
-    fbBuilder.addInt32(16, _testhashs32Fnv1);
-    fbBuilder.addUint32(17, _testhashu32Fnv1);
-    fbBuilder.addInt64(18, _testhashs64Fnv1);
-    fbBuilder.addUint64(19, _testhashu64Fnv1);
-    fbBuilder.addInt32(20, _testhashs32Fnv1a);
-    fbBuilder.addUint32(21, _testhashu32Fnv1a);
-    fbBuilder.addInt64(22, _testhashs64Fnv1a);
-    fbBuilder.addUint64(23, _testhashu64Fnv1a);
-    fbBuilder.addOffset(24, testarrayofboolsOffset);
-    fbBuilder.addFloat32(25, _testf);
-    fbBuilder.addFloat32(26, _testf2);
-    fbBuilder.addFloat32(27, _testf3);
-    fbBuilder.addOffset(28, testarrayofstring2Offset);
-    fbBuilder.addOffset(29, testarrayofsortedstructOffset);
-    fbBuilder.addOffset(30, flexOffset);
-    fbBuilder.addOffset(31, test5Offset);
-    fbBuilder.addOffset(32, vectorOfLongsOffset);
-    fbBuilder.addOffset(33, vectorOfDoublesOffset);
-    fbBuilder.addOffset(34, parentNamespaceTestOffset);
-    fbBuilder.addOffset(35, vectorOfReferrablesOffset);
-    fbBuilder.addUint64(36, _singleWeakReference);
-    fbBuilder.addOffset(37, vectorOfWeakReferencesOffset);
-    fbBuilder.addOffset(38, vectorOfStrongReferrablesOffset);
-    fbBuilder.addUint64(39, _coOwningReference);
-    fbBuilder.addOffset(40, vectorOfCoOwningReferencesOffset);
-    fbBuilder.addUint64(41, _nonOwningReference);
-    fbBuilder.addOffset(42, vectorOfNonOwningReferencesOffset);
-    fbBuilder.addUint8(43, _anyUniqueType?.value);
-    fbBuilder.addOffset(44, anyUniqueOffset);
-    fbBuilder.addUint8(45, _anyAmbiguousType?.value);
-    fbBuilder.addOffset(46, anyAmbiguousOffset);
-    fbBuilder.addOffset(47, vectorOfEnumsOffset);
-    fbBuilder.addInt8(48, _signedEnum?.value);
-    fbBuilder.addOffset(49, testrequirednestedflatbufferOffset);
-    fbBuilder.addOffset(50, scalarKeySortedTablesOffset);
-    return fbBuilder.endTable();
+      ..addInt16(1, _mana)
+      ..addInt16(2, _hp)
+      ..addOffset(3, nameOffset)
+      ..addOffset(5, inventoryOffset)
+      ..addUint8(6, _color?.value)
+      ..addUint8(7, _testType?.value)
+      ..addOffset(8, testOffset)
+      ..addOffset(9, test4Offset)
+      ..addOffset(10, testarrayofstringOffset)
+      ..addOffset(11, testarrayoftablesOffset)
+      ..addOffset(12, enemyOffset)
+      ..addOffset(13, testnestedflatbufferOffset)
+      ..addOffset(14, testemptyOffset)
+      ..addBool(15, _testbool)
+      ..addInt32(16, _testhashs32Fnv1)
+      ..addUint32(17, _testhashu32Fnv1)
+      ..addInt64(18, _testhashs64Fnv1)
+      ..addUint64(19, _testhashu64Fnv1)
+      ..addInt32(20, _testhashs32Fnv1a)
+      ..addUint32(21, _testhashu32Fnv1a)
+      ..addInt64(22, _testhashs64Fnv1a)
+      ..addUint64(23, _testhashu64Fnv1a)
+      ..addOffset(24, testarrayofboolsOffset)
+      ..addFloat32(25, _testf)
+      ..addFloat32(26, _testf2)
+      ..addFloat32(27, _testf3)
+      ..addOffset(28, testarrayofstring2Offset)
+      ..addOffset(29, testarrayofsortedstructOffset)
+      ..addOffset(30, flexOffset)
+      ..addOffset(31, test5Offset)
+      ..addOffset(32, vectorOfLongsOffset)
+      ..addOffset(33, vectorOfDoublesOffset)
+      ..addOffset(34, parentNamespaceTestOffset)
+      ..addOffset(35, vectorOfReferrablesOffset)
+      ..addUint64(36, _singleWeakReference)
+      ..addOffset(37, vectorOfWeakReferencesOffset)
+      ..addOffset(38, vectorOfStrongReferrablesOffset)
+      ..addUint64(39, _coOwningReference)
+      ..addOffset(40, vectorOfCoOwningReferencesOffset)
+      ..addUint64(41, _nonOwningReference)
+      ..addOffset(42, vectorOfNonOwningReferencesOffset)
+      ..addUint8(43, _anyUniqueType?.value)
+      ..addOffset(44, anyUniqueOffset)
+      ..addUint8(45, _anyAmbiguousType?.value)
+      ..addOffset(46, anyAmbiguousOffset)
+      ..addOffset(47, vectorOfEnumsOffset)
+      ..addInt8(48, _signedEnum?.value)
+      ..addOffset(49, testrequirednestedflatbufferOffset)
+      ..addOffset(50, scalarKeySortedTablesOffset)
+    ).finish();
   }
 
   /// Convenience method to serialize to byte list.
@@ -1983,20 +1983,20 @@ class TypeAliasesT {
         : fbBuilder.writeListInt8(v8!);
     final int? vf64Offset = vf64 == null ? null
         : fbBuilder.writeListFloat64(vf64!);
-    fbBuilder.startTable(12);
-    fbBuilder.addInt8(0, i8);
-    fbBuilder.addUint8(1, u8);
-    fbBuilder.addInt16(2, i16);
-    fbBuilder.addUint16(3, u16);
-    fbBuilder.addInt32(4, i32);
-    fbBuilder.addUint32(5, u32);
-    fbBuilder.addInt64(6, i64);
-    fbBuilder.addUint64(7, u64);
-    fbBuilder.addFloat32(8, f32);
-    fbBuilder.addFloat64(9, f64);
-    fbBuilder.addOffset(10, v8Offset);
-    fbBuilder.addOffset(11, vf64Offset);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(12)
+      ..addInt8(0, i8)
+      ..addUint8(1, u8)
+      ..addInt16(2, i16)
+      ..addUint16(3, u16)
+      ..addInt32(4, i32)
+      ..addUint32(5, u32)
+      ..addInt64(6, i64)
+      ..addUint64(7, u64)
+      ..addFloat32(8, f32)
+      ..addFloat64(9, f64)
+      ..addOffset(10, v8Offset)
+      ..addOffset(11, vf64Offset)
+    ).finish();
   }
 
   @override
@@ -2124,20 +2124,20 @@ class TypeAliasesObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeListInt8(_v8!);
     final int? vf64Offset = _vf64 == null ? null
         : fbBuilder.writeListFloat64(_vf64!);
-    fbBuilder.startTable(12);
-    fbBuilder.addInt8(0, _i8);
-    fbBuilder.addUint8(1, _u8);
-    fbBuilder.addInt16(2, _i16);
-    fbBuilder.addUint16(3, _u16);
-    fbBuilder.addInt32(4, _i32);
-    fbBuilder.addUint32(5, _u32);
-    fbBuilder.addInt64(6, _i64);
-    fbBuilder.addUint64(7, _u64);
-    fbBuilder.addFloat32(8, _f32);
-    fbBuilder.addFloat64(9, _f64);
-    fbBuilder.addOffset(10, v8Offset);
-    fbBuilder.addOffset(11, vf64Offset);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(12)
+      ..addInt8(0, _i8)
+      ..addUint8(1, _u8)
+      ..addInt16(2, _i16)
+      ..addUint16(3, _u16)
+      ..addInt32(4, _i32)
+      ..addUint32(5, _u32)
+      ..addInt64(6, _i64)
+      ..addUint64(7, _u64)
+      ..addFloat32(8, _f32)
+      ..addFloat64(9, _f64)
+      ..addOffset(10, v8Offset)
+      ..addOffset(11, vf64Offset)
+    ).finish();
   }
 
   /// Convenience method to serialize to byte list.

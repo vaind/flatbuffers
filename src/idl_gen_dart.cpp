@@ -1073,8 +1073,8 @@ class DartGenerator : public BaseGenerator {
       const std::vector<std::pair<int, FieldDef *>> &non_deprecated_fields,
       bool prependUnderscore = true, bool pack = false) {
     std::string code;
-    code += "    fbBuilder.startTable(" +
-            NumToString(non_deprecated_fields.size()) + ");\n";
+    code += "    return (fbBuilder.startTable(" +
+            NumToString(non_deprecated_fields.size()) + ")\n";
 
     for (auto it = non_deprecated_fields.begin();
          it != non_deprecated_fields.end(); ++it) {
@@ -1086,24 +1086,24 @@ class DartGenerator : public BaseGenerator {
           (prependUnderscore ? "_" : "") + MakeCamel(field.name, false);
 
       if (IsScalar(field.value.type.base_type)) {
-        code += "    fbBuilder.add" + GenType(field.value.type) + "(" +
+        code += "      ..add" + GenType(field.value.type) + "(" +
                 NumToString(offset) + ", " + field_name;
         if (field.value.type.enum_def) {
           bool isNullable = getDefaultValue(field.value).empty();
           code += (isNullable || !pack) ? "?.value" : ".value";
         }
-        code += ");\n";
+        code += ")\n";
       } else if (IsStruct(field.value.type)) {
         code += "    if (" + field_name + " != null) {\n";
-        code += "      fbBuilder.addStruct(" + NumToString(offset) + ", " +
-                field_name + (pack ? "!.pack" : "!.finish") + "(fbBuilder));\n";
+        code += "        ..addStruct(" + NumToString(offset) + ", " +
+                field_name + (pack ? "!.pack" : "!.finish") + "(fbBuilder))\n";
         code += "    }\n";
       } else {
-        code += "    fbBuilder.addOffset(" + NumToString(offset) + ", " +
-                MakeCamel(field.name, false) + "Offset);\n";
+        code += "      ..addOffset(" + NumToString(offset) + ", " +
+                MakeCamel(field.name, false) + "Offset)\n";
       }
     }
-    code += "    return fbBuilder.endTable();\n";
+    code += "    ).finish();\n";
     return code;
   }
 };

@@ -37,8 +37,8 @@ class InParentNamespace {
 
 class InParentNamespaceT {
   int pack(fb.Builder fbBuilder) {
-    fbBuilder.startTable(0);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(0)
+    ).finish();
   }
 
   @override
@@ -62,8 +62,8 @@ class InParentNamespaceObjectBuilder extends fb.ObjectBuilder {
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
-    fbBuilder.startTable(0);
-    return fbBuilder.endTable();
+    return (fbBuilder.startTable(0)
+    ).finish();
   }
 
   /// Convenience method to serialize to byte list.

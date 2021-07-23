@@ -125,11 +125,7 @@ class Builder {
   /// most recently written byte is this many bytes from the end of [_buf].
   int _tail = 0;
 
-  /// The location of the end of the current table, measured in bytes from the
-  /// end of [_buf].
-  int _currentTableEndTail = 0;
-
-  _VTable? _currentVTable;
+  TableBuilder? _currentTable;
 
   /// Map containing all strings that have been written so far.  This allows us
   /// to avoid duplicating strings.
@@ -159,191 +155,8 @@ class Builder {
   /// Calculate the finished buffer size (aligned).
   int size() => _tail + ((-_tail) % _maxAlign);
 
-  /// Add the [field] with the given boolean [value].  The field is not added if
-  /// the [value] is equal to [def].  Booleans are stored as 8-bit fields with
-  /// `0` for `false` and `1` for `true`.
-  void addBool(int field, bool? value, [bool? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofUint8, 1);
-      _trackField(field);
-      _buf.setInt8(_buf.lengthInBytes - _tail, value ? 1 : 0);
-    }
-  }
-
-  /// Add the [field] with the given 32-bit signed integer [value].  The field is
-  /// not added if the [value] is equal to [def].
-  void addInt32(int field, int? value, [int? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofInt32, 1);
-      _trackField(field);
-      _setInt32AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 32-bit signed integer [value].  The field is
-  /// not added if the [value] is equal to [def].
-  void addInt16(int field, int? value, [int? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofInt16, 1);
-      _trackField(field);
-      _setInt16AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 8-bit signed integer [value].  The field is
-  /// not added if the [value] is equal to [def].
-  void addInt8(int field, int? value, [int? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofInt8, 1);
-      _trackField(field);
-      _setInt8AtTail(_buf, _tail, value);
-    }
-  }
-
-  void addStruct(int field, int offset) {
-    _ensureCurrentVTable();
-    _trackField(field);
-    _currentVTable!.addField(field, offset);
-  }
-
-  /// Add the [field] referencing an object with the given [offset].
-  void addOffset(int field, int? offset) {
-    _ensureCurrentVTable();
-    if (offset != null) {
-      _prepare(_sizeofUint32, 1);
-      _trackField(field);
-      _setUint32AtTail(_buf, _tail, _tail - offset);
-    }
-  }
-
-  /// Add the [field] with the given 32-bit unsigned integer [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addUint32(int field, int? value, [int? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofUint32, 1);
-      _trackField(field);
-      _setUint32AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 32-bit unsigned integer [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addUint16(int field, int? value, [int? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofUint16, 1);
-      _trackField(field);
-      _setUint16AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 8-bit unsigned integer [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addUint8(int field, int? value, [int? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofUint8, 1);
-      _trackField(field);
-      _setUint8AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 32-bit float [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addFloat32(int field, double? value, [double? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofFloat32, 1);
-      _trackField(field);
-      _setFloat32AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 64-bit double [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addFloat64(int field, double? value, [double? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofFloat64, 1);
-      _trackField(field);
-      _setFloat64AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 64-bit unsigned integer [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addUint64(int field, int? value, [double? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofUint64, 1);
-      _trackField(field);
-      _setUint64AtTail(_buf, _tail, value);
-    }
-  }
-
-  /// Add the [field] with the given 64-bit unsigned integer [value].  The field
-  /// is not added if the [value] is equal to [def].
-  void addInt64(int field, int? value, [double? def]) {
-    _ensureCurrentVTable();
-    if (value != null && value != def) {
-      _prepare(_sizeofInt64, 1);
-      _trackField(field);
-      _setInt64AtTail(_buf, _tail, value);
-    }
-  }
-
   /// End the current table and return its offset.
-  int endTable() {
-    if (_currentVTable == null) {
-      throw new StateError('Start a table before ending it.');
-    }
-    // Prepare for writing the VTable.
-    _prepare(_sizeofInt32, 1);
-    int tableTail = _tail;
-    // Prepare the size of the current table.
-    final currentVTable = _currentVTable!;
-    currentVTable.tableSize = tableTail - _currentTableEndTail;
-    // Prepare the VTable to use for the current table.
-    int? vTableTail;
-    {
-      currentVTable.computeFieldOffsets(tableTail);
-
-      // Try to find an existing compatible VTable.
-      if (deduplicateTables) {
-        // Search backward - more likely to have recently used one
-        for (int i = _vTables.length - 1; i >= 0; i--) {
-          final int vt2Offset = _vTables[i];
-          final int vt2Start = _buf.lengthInBytes - vt2Offset;
-          final int vt2Size = _buf.getUint16(vt2Start, Endian.little);
-
-          if (currentVTable._vTableSize == vt2Size &&
-              currentVTable._offsetsMatch(vt2Start, _buf)) {
-            vTableTail = vt2Offset;
-            break;
-          }
-        }
-      }
-
-      // Write a new VTable.
-      if (vTableTail == null) {
-        _prepare(_sizeofUint16, _currentVTable!.numOfUint16);
-        vTableTail = _tail;
-        currentVTable.tail = vTableTail;
-        currentVTable.output(_buf, _buf.lengthInBytes - _tail);
-        if (deduplicateTables) _vTables.add(currentVTable.tail);
-      }
-    }
-    // Set the VTable offset.
-    _setInt32AtTail(_buf, tableTail, vTableTail - tableTail);
-    // Done with this table.
-    _currentVTable = null;
-    return tableTail;
-  }
+  int endTable() => _currentTable!.finish();
 
   /// Returns the finished buffer. You must call [finish] before accessing this.
   Uint8List get buffer {
@@ -363,11 +176,11 @@ class Builder {
     final requiredBytes = _sizeofUint32 * (fileIdentifier == null ? 1 : 2);
     _prepare(max(requiredBytes, _maxAlign), 1);
     final finishedSize = size();
-    _setUint32AtTail(_buf, finishedSize, finishedSize - offset);
+    _setUint32AtTail(finishedSize, finishedSize - offset);
     if (fileIdentifier != null) {
       for (int i = 0; i < 4; i++) {
-        _setUint8AtTail(_buf, finishedSize - _sizeofUint32 - i,
-            fileIdentifier.codeUnitAt(i));
+        _setUint8AtTail(
+            finishedSize - _sizeofUint32 - i, fileIdentifier.codeUnitAt(i));
       }
     }
 
@@ -375,7 +188,7 @@ class Builder {
     for (var i = sizeBeforePadding + 1;
         i <= finishedSize - requiredBytes;
         i++) {
-      _setUint8AtTail(_buf, i, 0);
+      _setUint8AtTail(i, 0);
     }
     _finished = true;
   }
@@ -385,7 +198,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putFloat64(double value) {
     _prepare(_sizeofFloat64, 1);
-    _setFloat32AtTail(_buf, _tail, value);
+    _setFloat32AtTail(_tail, value);
   }
 
   /// Writes a Float32 to the tail of the buffer after preparing space for it.
@@ -393,7 +206,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putFloat32(double value) {
     _prepare(_sizeofFloat32, 1);
-    _setFloat32AtTail(_buf, _tail, value);
+    _setFloat32AtTail(_tail, value);
   }
 
   /// Writes a Int64 to the tail of the buffer after preparing space for it.
@@ -401,7 +214,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putInt64(int value) {
     _prepare(_sizeofInt64, 1);
-    _setInt64AtTail(_buf, _tail, value);
+    _setInt64AtTail(_tail, value);
   }
 
   /// Writes a Uint32 to the tail of the buffer after preparing space for it.
@@ -409,7 +222,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putInt32(int value) {
     _prepare(_sizeofInt32, 1);
-    _setInt32AtTail(_buf, _tail, value);
+    _setInt32AtTail(_tail, value);
   }
 
   /// Writes a Uint16 to the tail of the buffer after preparing space for it.
@@ -417,7 +230,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putInt16(int value) {
     _prepare(_sizeofInt16, 1);
-    _setInt16AtTail(_buf, _tail, value);
+    _setInt16AtTail(_tail, value);
   }
 
   /// Writes a Uint8 to the tail of the buffer after preparing space for it.
@@ -433,7 +246,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putUint64(int value) {
     _prepare(_sizeofUint64, 1);
-    _setUint64AtTail(_buf, _tail, value);
+    _setUint64AtTail(_tail, value);
   }
 
   /// Writes a Uint32 to the tail of the buffer after preparing space for it.
@@ -441,7 +254,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putUint32(int value) {
     _prepare(_sizeofUint32, 1);
-    _setUint32AtTail(_buf, _tail, value);
+    _setUint32AtTail(_tail, value);
   }
 
   /// Writes a Uint16 to the tail of the buffer after preparing space for it.
@@ -449,7 +262,7 @@ class Builder {
   /// Updates the [offset] pointer.  This method is intended for use when writing structs to the buffer.
   void putUint16(int value) {
     _prepare(_sizeofUint16, 1);
-    _setUint16AtTail(_buf, _tail, value);
+    _setUint16AtTail(_tail, value);
   }
 
   /// Writes a Uint8 to the tail of the buffer after preparing space for it.
@@ -465,7 +278,7 @@ class Builder {
     _finished = false;
     _maxAlign = 1;
     _tail = 0;
-    _currentVTable = null;
+    _currentTable = null;
     if (deduplicateTables) _vTables.clear();
     if (_strings != null) {
       _strings = new Map<String, int>();
@@ -473,12 +286,11 @@ class Builder {
   }
 
   /// Start a new table. Must be finished with [endTable] invocation.
-  void startTable(int numFields) {
-    if (_currentVTable != null) {
+  TableBuilder startTable(int numFields) {
+    if (_currentTable != null) {
       throw new StateError('Inline tables are not supported.');
     }
-    _currentVTable = new _VTable(numFields);
-    _currentTableEndTail = _tail;
+    return _currentTable = TableBuilder._(this, numFields);
   }
 
   /// Finish a Struct vector.  Most callers should preferto use [writeListOfStructs].
@@ -504,10 +316,10 @@ class Builder {
     _prepare(_sizeofUint32, 1 + values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setUint32AtTail(_buf, tail, tail - value);
+      _setUint32AtTail(tail, tail - value);
       tail -= _sizeofUint32;
     }
     return result;
@@ -519,10 +331,10 @@ class Builder {
     _prepare(_sizeofFloat64, values.length, additionalBytes: _sizeofUint32);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (double value in values) {
-      _setFloat64AtTail(_buf, tail, value);
+      _setFloat64AtTail(tail, value);
       tail -= _sizeofFloat64;
     }
     return result;
@@ -534,10 +346,10 @@ class Builder {
     _prepare(_sizeofFloat32, 1 + values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (double value in values) {
-      _setFloat32AtTail(_buf, tail, value);
+      _setFloat32AtTail(tail, value);
       tail -= _sizeofFloat32;
     }
     return result;
@@ -549,10 +361,10 @@ class Builder {
     _prepare(_sizeofInt64, values.length, additionalBytes: _sizeofUint32);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setInt64AtTail(_buf, tail, value);
+      _setInt64AtTail(tail, value);
       tail -= _sizeofInt64;
     }
     return result;
@@ -564,10 +376,10 @@ class Builder {
     _prepare(_sizeofUint64, values.length, additionalBytes: _sizeofUint32);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setUint64AtTail(_buf, tail, value);
+      _setUint64AtTail(tail, value);
       tail -= _sizeofUint64;
     }
     return result;
@@ -579,10 +391,10 @@ class Builder {
     _prepare(_sizeofUint32, 1 + values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setInt32AtTail(_buf, tail, value);
+      _setInt32AtTail(tail, value);
       tail -= _sizeofInt32;
     }
     return result;
@@ -594,10 +406,10 @@ class Builder {
     _prepare(_sizeofUint32, 1 + values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setUint32AtTail(_buf, tail, value);
+      _setUint32AtTail(tail, value);
       tail -= _sizeofUint32;
     }
     return result;
@@ -609,10 +421,10 @@ class Builder {
     _prepare(_sizeofUint32, 1, additionalBytes: 2 * values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setInt16AtTail(_buf, tail, value);
+      _setInt16AtTail(tail, value);
       tail -= _sizeofInt16;
     }
     return result;
@@ -624,10 +436,10 @@ class Builder {
     _prepare(_sizeofUint32, 1, additionalBytes: 2 * values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setUint16AtTail(_buf, tail, value);
+      _setUint16AtTail(tail, value);
       tail -= _sizeofUint16;
     }
     return result;
@@ -644,10 +456,10 @@ class Builder {
     _prepare(_sizeofUint32, 1, additionalBytes: values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setInt8AtTail(_buf, tail, value);
+      _setInt8AtTail(tail, value);
       tail -= _sizeofUint8;
     }
     return result;
@@ -659,10 +471,10 @@ class Builder {
     _prepare(_sizeofUint32, 1, additionalBytes: values.length);
     final int result = _tail;
     int tail = _tail;
-    _setUint32AtTail(_buf, tail, values.length);
+    _setUint32AtTail(tail, values.length);
     tail -= _sizeofUint32;
     for (int value in values) {
-      _setUint8AtTail(_buf, tail, value);
+      _setUint8AtTail(tail, value);
       tail -= _sizeofUint8;
     }
     return result;
@@ -715,7 +527,7 @@ class Builder {
       _buf.setUint8(offset++, char);
     }
     _buf.setUint8(offset, 0); // trailing zero
-    _setUint32AtTail(_buf, _tail, value.length);
+    _setUint32AtTail(_tail, value.length);
     return true;
   }
 
@@ -724,7 +536,7 @@ class Builder {
     final bytes = utf8.encode(value) as Uint8List;
     final length = bytes.length;
     _prepare(4, 1, additionalBytes: length + 1);
-    _setUint32AtTail(_buf, _tail, length);
+    _setUint32AtTail(_tail, length);
     var offset = _buf.lengthInBytes - _tail + 4;
     for (int i = 0; i < length; i++) {
       _buf.setUint8(offset++, bytes[i]);
@@ -732,16 +544,9 @@ class Builder {
     _buf.setUint8(offset, 0); // trailing zero
   }
 
-  /// Throw an exception if there is not currently a vtable.
-  void _ensureCurrentVTable() {
-    if (_currentVTable == null) {
-      throw new StateError('Start a table before adding values.');
-    }
-  }
-
   /// Throw an exception if there is currently a vtable.
   void _ensureNoVTable() {
-    if (_currentVTable != null) {
+    if (_currentTable != null) {
       throw new StateError(
           'Cannot write a non-scalar value while writing a table.');
     }
@@ -783,56 +588,258 @@ class Builder {
 
     // zero out the added padding
     for (var i = _tail + 1; i <= _tail + alignDelta; i++) {
-      _setUint8AtTail(_buf, i, 0);
+      _setUint8AtTail(i, 0);
     }
 
     // Update the tail pointer.
     _tail += bufSize;
   }
 
-  /// Record the offset of the given [field].
-  void _trackField(int field) {
-    _currentVTable!.addField(field, _tail);
-  }
-
-  static void _setFloat64AtTail(ByteData _buf, int tail, double x) {
+  void _setFloat64AtTail(int tail, double x) {
     _buf.setFloat64(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setFloat32AtTail(ByteData _buf, int tail, double x) {
+  void _setFloat32AtTail(int tail, double x) {
     _buf.setFloat32(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setUint64AtTail(ByteData _buf, int tail, int x) {
+  void _setUint64AtTail(int tail, int x) {
     _buf.setUint64(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setInt64AtTail(ByteData _buf, int tail, int x) {
+  void _setInt64AtTail(int tail, int x) {
     _buf.setInt64(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setInt32AtTail(ByteData _buf, int tail, int x) {
+  void _setInt32AtTail(int tail, int x) {
     _buf.setInt32(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setUint32AtTail(ByteData _buf, int tail, int x) {
+  void _setUint32AtTail(int tail, int x) {
     _buf.setUint32(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setInt16AtTail(ByteData _buf, int tail, int x) {
+  void _setInt16AtTail(int tail, int x) {
     _buf.setInt16(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setUint16AtTail(ByteData _buf, int tail, int x) {
+  void _setUint16AtTail(int tail, int x) {
     _buf.setUint16(_buf.lengthInBytes - tail, x, Endian.little);
   }
 
-  static void _setInt8AtTail(ByteData _buf, int tail, int x) {
+  void _setInt8AtTail(int tail, int x) {
     _buf.setInt8(_buf.lengthInBytes - tail, x);
   }
 
-  static void _setUint8AtTail(ByteData _buf, int tail, int x) {
+  void _setUint8AtTail(int tail, int x) {
     _buf.setUint8(_buf.lengthInBytes - tail, x);
+  }
+}
+
+/// Builds FlatBuffer "tables".
+class TableBuilder {
+  final Builder _builder;
+  final _VTable _currentVTable;
+
+  /// The location of the end of the current table, measured in bytes from the
+  /// end of [_buf].
+  int _currentTableEndTail = 0;
+
+  // Internal, only created by a [Builder].
+  TableBuilder._(this._builder, int numFields)
+      : _currentVTable = _VTable(numFields) {
+    _currentTableEndTail = _builder._tail;
+  }
+
+  /// Add the [field] with the given boolean [value].  The field is not added if
+  /// the [value] is equal to [def].  Booleans are stored as 8-bit fields with
+  /// `0` for `false` and `1` for `true`.
+  void addBool(int field, bool? value, [bool? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofUint8, 1);
+      _trackField(field);
+      _builder._setInt8AtTail(_builder._tail, value ? 1 : 0);
+    }
+  }
+
+  /// Add the [field] with the given 32-bit signed integer [value].  The field is
+  /// not added if the [value] is equal to [def].
+  void addInt32(int field, int? value, [int? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofInt32, 1);
+      _trackField(field);
+      _builder._setInt32AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 32-bit signed integer [value].  The field is
+  /// not added if the [value] is equal to [def].
+  void addInt16(int field, int? value, [int? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofInt16, 1);
+      _trackField(field);
+      _builder._setInt16AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 8-bit signed integer [value].  The field is
+  /// not added if the [value] is equal to [def].
+  void addInt8(int field, int? value, [int? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofInt8, 1);
+      _trackField(field);
+      _builder._setInt8AtTail(_builder._tail, value);
+    }
+  }
+
+  void addStruct(int field, int offset) {
+    assert(_builder._currentTable == this);
+    _trackField(field);
+    _currentVTable.addField(field, offset);
+  }
+
+  /// Add the [field] referencing an object with the given [offset].
+  void addOffset(int field, int? offset) {
+    assert(_builder._currentTable == this);
+    if (offset != null) {
+      _builder._prepare(_sizeofUint32, 1);
+      _trackField(field);
+      _builder._setUint32AtTail(_builder._tail, _builder._tail - offset);
+    }
+  }
+
+  /// Add the [field] with the given 32-bit unsigned integer [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addUint32(int field, int? value, [int? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofUint32, 1);
+      _trackField(field);
+      _builder._setUint32AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 32-bit unsigned integer [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addUint16(int field, int? value, [int? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofUint16, 1);
+      _trackField(field);
+      _builder._setUint16AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 8-bit unsigned integer [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addUint8(int field, int? value, [int? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofUint8, 1);
+      _trackField(field);
+      _builder._setUint8AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 32-bit float [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addFloat32(int field, double? value, [double? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofFloat32, 1);
+      _trackField(field);
+      _builder._setFloat32AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 64-bit double [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addFloat64(int field, double? value, [double? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofFloat64, 1);
+      _trackField(field);
+      _builder._setFloat64AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 64-bit unsigned integer [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addUint64(int field, int? value, [double? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofUint64, 1);
+      _trackField(field);
+      _builder._setUint64AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Add the [field] with the given 64-bit unsigned integer [value].  The field
+  /// is not added if the [value] is equal to [def].
+  void addInt64(int field, int? value, [double? def]) {
+    assert(_builder._currentTable == this);
+    if (value != null && value != def) {
+      _builder._prepare(_sizeofInt64, 1);
+      _trackField(field);
+      _builder._setInt64AtTail(_builder._tail, value);
+    }
+  }
+
+  /// Record the offset of the given [field].
+  void _trackField(int field) {
+    _currentVTable.addField(field, _builder._tail);
+  }
+
+  /// End the current table and return its offset.
+  int finish() {
+    assert(_builder._currentTable == this);
+
+    // Prepare for writing the VTable.
+    _builder._prepare(_sizeofInt32, 1);
+    int tableTail = _builder._tail;
+    // Prepare the size of the current table.
+    _currentVTable.tableSize = tableTail - _currentTableEndTail;
+    // Prepare the VTable to use for the current table.
+    int? vTableTail;
+    {
+      _currentVTable.computeFieldOffsets(tableTail);
+
+      // Try to find an existing compatible VTable.
+      if (_builder.deduplicateTables) {
+        // Search backward - more likely to have recently used one
+        for (int i = _builder._vTables.length - 1; i >= 0; i--) {
+          final int vt2Offset = _builder._vTables[i];
+          final int vt2Start = _builder._buf.lengthInBytes - vt2Offset;
+          final int vt2Size = _builder._buf.getUint16(vt2Start, Endian.little);
+
+          if (_currentVTable._vTableSize == vt2Size &&
+              _currentVTable._offsetsMatch(vt2Start, _builder._buf)) {
+            vTableTail = vt2Offset;
+            break;
+          }
+        }
+      }
+
+      // Write a new VTable.
+      if (vTableTail == null) {
+        _builder._prepare(_sizeofUint16, _currentVTable.numOfUint16);
+        vTableTail = _builder._tail;
+        _currentVTable.tail = vTableTail;
+        _currentVTable.output(
+            _builder._buf, _builder._buf.lengthInBytes - _builder._tail);
+        if (_builder.deduplicateTables)
+          _builder._vTables.add(_currentVTable.tail);
+      }
+    }
+    // Set the VTable offset.
+    _builder._setInt32AtTail(tableTail, vTableTail - tableTail);
+    // Done with this table.
+    _builder._currentTable = null;
+    return tableTail;
   }
 }
 
