@@ -16,10 +16,12 @@
 #
 # Note to pub consumers: this file is used to assist with publishing the
 # pub package from the flatbuffers repository and is not meant for general use.
-# As pub does not currently provide a way to exclude files, it is included here.
 set -e
 
-command -v dart >/dev/null 2>&1 || { echo >&2 "Require `dart` but it's not installed.  Aborting."; exit 1; }
+command -v dart >/dev/null 2>&1 || {
+    echo >&2 "Require $(dart) but it's not installed.  Aborting."
+    exit 1
+}
 
 pushd ../tests
 ./DartTest.sh
@@ -29,7 +31,7 @@ pushd ../samples
 ./dart_sample.sh
 popd
 
-dart pub publish
+dart pub publish --dry-run
 
 rm example/monster.fbs
 rm test/*.fbs
